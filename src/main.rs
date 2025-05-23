@@ -1,76 +1,43 @@
-type Node = String;
+use std::collections::{HashSet, VecDeque};
 
-#[derive(Debug, Clone)]
-struct Edge {
-    lhs: Node,
-    rhs: Node,
-}
-struct GraphProcessor {}
-
-impl GraphProcessor {
-    fn new() -> GraphProcessor {
-        Self {}
+/// Simulated function to get all edges connected to a node.
+/// You will replace this with your actual data source or API.
+fn get_edges(node: &str) -> Vec<(String, String)> {
+    match node {
+        "A" => vec![
+            ("A".to_string(), "B".to_string()),
+            ("A".to_string(), "C".to_string()),
+        ],
+        "B" => vec![("B".to_string(), "D".to_string())],
+        "C" => vec![("C".to_string(), "E".to_string())],
+        "E" => vec![("E".to_string(), "F".to_string())],
+        _ => vec![],
     }
-    fn find_direct_child_nodes(&self, parent: Node, edges: &Vec<Edge>) -> Vec<Node> {
-        let mut children: Vec<Node> = Vec::new();
+}
 
-        for edge in edges.iter() {
-            if edge.lhs == parent {
-                // Add node to nodelists
-                children.push(edge.rhs.clone());
-                // Mark edge consumed
-            } else if edge.rhs == parent {
-                // Add node to nodelists
-                children.push(edge.lhs.clone());
-                // Mark edge consumed
+/// Find all nodes connected to the starting node by dynamically exploring edges.
+fn find_connected_nodes_dynamic(start: String) -> HashSet<String> {
+    let mut visited = HashSet::new();
+    let mut queue = VecDeque::new();
+
+    visited.insert(start.clone());
+    queue.push_back(start);
+
+    while let Some(node) = queue.pop_front() {
+        let edges = get_edges(&node);
+        for (a, b) in edges {
+            let neighbor = if a == node { b } else { a };
+            if visited.insert(neighbor.clone()) {
+                queue.push_back(neighbor);
             }
         }
-        children
     }
 
-    fn find_all_nodes(&self, initial_node: Node, edges: &Vec<Edge>) -> Vec<Node> {
-        let mut children: Vec<Node> = Vec::new(); // Accumulates all nodes
-        let mut unsearched_nodes: Vec<Node> = Vec::new(); // Accumulates
-        let mut new_nodes: Vec<Node> = Vec::new(); // Accumulates
-        unsearched_nodes.push(initial_node);
-
-        for node in unsearched_nodes.iter() {
-            new_nodes.extend(self.find_direct_child_nodes(node.clone(), edges));
-        }
-        children.extend(unsearched_nodes);
-
-        unsearched_nodes.extend(new_nodes.clone());
-        new_nodes.clear();
-
-        // Return
-        children
-    }
+    visited
 }
 
 fn main() {
-    let edges = vec![
-        Edge {
-            lhs: String::from("A"),
-            rhs: String::from("B"),
-        },
-        Edge {
-            lhs: String::from("C"),
-            rhs: String::from("B"),
-        },
-        Edge {
-            lhs: String::from("B"),
-            rhs: String::from("D"),
-        },
-        Edge {
-            lhs: String::from("E"),
-            rhs: String::from("A"),
-        },
-    ];
-
-    let gp = GraphProcessor::new();
-    let start_node: Node = String::from("A");
-
-    let children = gp.find_all_nodes(start_node, &edges);
-
-    println!("{:#?}", children);
+    let start_node = "A".to_string();
+    let connected = find_connected_nodes_dynamic(start_node);
+    println!("Connected nodes: {:?}", connected);
 }
