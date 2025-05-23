@@ -1,73 +1,49 @@
+type Node = String;
+
 #[derive(Debug, Clone)]
 struct Edge {
-    lhs: String,
-    rhs: String,
-    consumed: bool,
+    lhs: Node,
+    rhs: Node,
 }
-
-struct GraphProcessor {
-    edges: Vec<Edge>,
-    unused_edges: Vec<Edge>,
-    found_nodes: Vec<String>,
-    unsearched_nodes: Vec<String>,
-}
+struct GraphProcessor {}
 
 impl GraphProcessor {
-    fn new(edges: Vec<Edge>) -> GraphProcessor {
-        let unused_edges = edges.clone();
-        let found_nodes = Vec::new();
-        let unsearched_nodes = Vec::new();
-
-        GraphProcessor {
-            edges,
-            unused_edges,
-            found_nodes,
-            unsearched_nodes,
-        }
+    fn new() -> GraphProcessor {
+        Self {}
     }
-    fn find_all_nodes(mut self, start_node: String) {
-        self.found_nodes.push(start_node.clone());
-        self.unsearched_nodes.push(start_node.clone());
+    fn find_direct_child_nodes(&self, parent: Node, edges: &Vec<Edge>) -> Vec<Node> {
+        let mut children: Vec<Node> = Vec::new();
 
-        self.print_found_nodes();
-        self.print_unsearched_nodes();
-        self.print_unused_edges();
-
-        for node in self.unsearched_nodes {
-            //println!(">>{}", node);
-            self.find_child_nodes_from_node(&node);
-        }
-    }
-
-    fn find_child_nodes_from_node(&mut self, node: &String) {
-        for edge in &mut self.unused_edges {
-            if !edge.consumed {
-                if edge.lhs == *node {
-                    // Add node to nodelists
-                    self.found_nodes.push(edge.rhs.clone());
-                    self.unsearched_nodes.push(edge.rhs.clone());
-                    // Mark edge consumed
-                    edge.consumed = true;
-                } else if edge.rhs == *node {
-                    // Add node to nodelists
-                    self.found_nodes.push(edge.lhs.clone());
-                    self.unsearched_nodes.push(edge.lhs.clone());
-                    // Mark edge consumed
-                    edge.consumed = true;
-                }
+        for edge in edges.iter() {
+            if edge.lhs == parent {
+                // Add node to nodelists
+                children.push(edge.rhs.clone());
+                // Mark edge consumed
+            } else if edge.rhs == parent {
+                // Add node to nodelists
+                children.push(edge.lhs.clone());
+                // Mark edge consumed
             }
         }
-        // Remove input node from list of unsearched nodes
-        self.unsearched_nodes.retain(|n| *n != *node);
+        children
     }
-    fn print_found_nodes(&self) {
-        println!("Found Nodes: {:#?}", self.found_nodes);
-    }
-    fn print_unsearched_nodes(&self) {
-        println!("Unsearched Nodes: {:#?}", self.unsearched_nodes);
-    }
-    fn print_unused_edges(&self) {
-        println!("Unused: {:#?}", self.unused_edges);
+
+    fn find_all_nodes(&self, initial_node: Node, edges: &Vec<Edge>) -> Vec<Node> {
+        let mut children: Vec<Node> = Vec::new(); // Accumulates all nodes
+        let mut unsearched_nodes: Vec<Node> = Vec::new(); // Accumulates
+        let mut new_nodes: Vec<Node> = Vec::new(); // Accumulates
+        unsearched_nodes.push(initial_node);
+
+        for node in unsearched_nodes.iter() {
+            new_nodes.extend(self.find_direct_child_nodes(node.clone(), edges));
+        }
+        children.extend(unsearched_nodes);
+
+        unsearched_nodes.extend(new_nodes.clone());
+        new_nodes.clear();
+
+        // Return
+        children
     }
 }
 
@@ -76,30 +52,25 @@ fn main() {
         Edge {
             lhs: String::from("A"),
             rhs: String::from("B"),
-            consumed: false,
         },
         Edge {
             lhs: String::from("C"),
             rhs: String::from("B"),
-            consumed: false,
         },
         Edge {
             lhs: String::from("B"),
             rhs: String::from("D"),
-            consumed: false,
         },
         Edge {
             lhs: String::from("E"),
             rhs: String::from("A"),
-            consumed: false,
         },
     ];
 
-    let gp = GraphProcessor::new(edges);
-    let start_node = String::from("A");
+    let gp = GraphProcessor::new();
+    let start_node: Node = String::from("A");
 
-    gp.find_all_nodes(start_node);
-    gp.print_found_nodes();
-    gp.print_unsearched_nodes();
-    gp.print_unused_edges();
+    let children = gp.find_all_nodes(start_node, &edges);
+
+    println!("{:#?}", children);
 }
